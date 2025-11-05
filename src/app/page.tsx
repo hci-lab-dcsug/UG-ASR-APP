@@ -29,6 +29,7 @@ export default function Page() {
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordingAvailable, setRecordingAvailable] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const waveformRef = useRef<HTMLDivElement | null>(null);
@@ -241,18 +242,27 @@ export default function Page() {
       const preparedFile = await convertAudioToMono16k(audioFile);
       const formData = new FormData();
       formData.append("file", preparedFile);
+      formData.append("model", model);
+      formData.append("language", language);
+      formData.append("isImpaired", isImpaired);
+      formData.append("etiology", etiology);
 
       // Pick endpoint
-      let endpoint = "/api/transcribe";
-      let qs = "?model_name=sm";
+      const endpoint = "http://localhost:8000/transcribe";
+      const qs = "";
 
-      if (model === "wav2vec") {
-        endpoint = "/api/transcribe-wav2vec";
-        qs = "?model_used=wav2vec2-bert-akan-ugspeechdata-v2";
-      } else if (model === "whisper" && !isImpaired) {
-        endpoint = "/api/transcribe-non-standard";
-        qs = "?model_name=lg";
-      }
+      console.log(model, language, isImpaired);
+
+      // let endpoint = "/api/transcribe";
+      // let qs = "?model_name=sm";
+      //
+      // if (model === "wav2vec") {
+      //   endpoint = "/api/transcribe-wav2vec";
+      //   qs = "?model_used=wav2vec2-bert-akan-ugspeechdata-v2";
+      // } else if (model === "whisper" && !isImpaired) {
+      //   endpoint = "/api/transcribe-non-standard";
+      //   qs = "?model_name=lg";
+      // }
 
       const res = await fetch(`${endpoint}${qs}`, {
         method: "POST",
@@ -265,9 +275,9 @@ export default function Page() {
         throw new Error(`Server error ${res.status}: ${text.slice(0, 200)}`);
       }
 
-      const data: { text?: string } = await res.json();
-      if (!data?.text) throw new Error("No text field in response. Check backend output.");
-      setTranscription(data.text);
+      const data: { transcription?: string } = await res.json();
+      if (!data?.transcription) throw new Error("No transcription field in response. Check backend output.");
+      setTranscription(data.transcription);
     } catch (err: unknown) {
       console.error("handleSubmit error:", err);
       const message =
@@ -316,6 +326,7 @@ export default function Page() {
 
   // Create/destroy wavesurfer when audio & transcript ready
   useEffect(() => {
+    setPlayerReady(false);
     if (wavesurfer.current) {
       try {
         wavesurfer.current.destroy();
@@ -327,10 +338,15 @@ export default function Page() {
     if (audioUrl && transcription && waveformRef.current) {
       const ws = WaveSurfer.create({
         container: waveformRef.current,
-        waveColor: "#ccc",
-        progressColor: "#007bff",
+        waveColor: "rgba(255, 255, 255, 0.35)",
+        progressColor: "#ffffff",
+        cursorColor: "rgba(255, 255, 255, 0.75)",
         barWidth: 2,
-        height: 80,
+        barRadius: 2,
+        height: 90,
+        normalize: true,
+        responsive: true,
+        backgroundColor: "transparent",
       }) as WaveSurferWithVolume;
 
       wavesurfer.current = ws;
@@ -339,6 +355,7 @@ export default function Page() {
         setDuration(ws.getDuration());
         setCurrentTime(0);
         ws.setVolume?.(volume); // set initial volume safely
+        setPlayerReady(true);
       });
       ws.on("audioprocess", () => {
         setCurrentTime(ws.getCurrentTime());
@@ -354,6 +371,7 @@ export default function Page() {
         } catch {
           /* noop */
         }
+        setPlayerReady(false);
       };
     }
   }, [audioUrl, transcription]);
@@ -372,173 +390,223 @@ export default function Page() {
   };
 
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <h1>UGVoice Transcribe</h1>
-        <p className="subtitle">Convert speech to text with us</p>
+    <div className="app-shell">
+      <header className="shell-header">
+        <div className="brand">
+          <span className="brand-mark">UG</span>
+          <div className="brand-copy">
+            <h1>UGVoice Transcribe</h1>
+            <p>Monochrome studio for fast Akan and Ewe speech-to-text.</p>
+          </div>
+        </div>
+        <div className="chip-row">
+          <span className="status-chip">{language === "akan" ? "Akan" : "Ewe"} language</span>
+          {/* <span className="status-chip">{model === "whisper" ? "Whisper" : "Wav2Vec"} model</span> */}
+          {/* <span className={`status-chip ${isRecording ? "status-chip--pulse" : ""}`}>
+            {isRecording
+              ? "Recording..."
+              : recordingAvailable
+              ? "Recording ready"
+              : audioFile
+              ? "Audio loaded"
+              : "Idle"}
+          </span> */}
+        </div>
       </header>
 
-      <main className="main-content">
-        <div className="upload-section card">
-          <h2>Upload or Record Audio</h2>
-          <form onSubmit={handleSubmit}>
-            <div className="file-input-container">
-              <label className="file-input-label">
-                <input
-                  type="file"
-                  accept=".mp3,.wav,.webm,.m4a,audio/*"
-                  onChange={handleFileChange}
-                  className="file-input"
-                />
-                <span className="file-input-button">Choose Audio File</span>
-                <span className="file-input-name">
-                  {audioFile ? audioFile.name : "No file selected"}
-                </span>
-              </label>
-            </div>
+      <main className="shell-body">
+        <section className="panel panel--form">
+          <div className="panel-heading">
+            <h2>Audio Intake</h2>
+            <p>Upload pristine audio or capture a new take, then tailor the model to your speaker.</p>
+          </div>
 
-            <div className="recording-controls">
+          <ol className="stepper">
+            <li className={`stepper-item ${audioFile || recordingAvailable ? "is-active" : ""}`}>
+              <span className="stepper-index">1</span>
+              <span>Choose source</span>
+            </li>
+            <li className={`stepper-item ${transcription ? "is-active" : ""}`}>
+              <span className="stepper-index">2</span>
+              <span>Review transcript</span>
+            </li>
+          </ol>
+
+          <form onSubmit={handleSubmit} className="input-form">
+            <label className="input-tile">
+              <input
+                type="file"
+                accept=".mp3,.wav,.webm,.m4a,audio/*"
+                onChange={handleFileChange}
+                className="file-input-hidden"
+              />
+              <div className="input-trigger">
+                <span className="input-trigger-label">Upload audio</span>
+                <span className="input-trigger-hint">MP3, WAV, WEBM, M4A</span>
+              </div>
+              <span className="input-file-name">{audioFile ? audioFile.name : "No file selected"}</span>
+            </label>
+
+            <div className="recording-stack">
               {!isRecording ? (
-                <button type="button" className="record-button" onClick={startRecording}>
-                  🎤 Start Recording
+                <button type="button" className="button button--ghost" onClick={startRecording}>
+                  Start recording
                 </button>
               ) : (
-                <button type="button" className="stop-button" onClick={stopRecording}>
-                  ⏹️ Stop
+                <button type="button" className="button button--danger" onClick={stopRecording}>
+                  Stop recording
                 </button>
               )}
-              {isRecording && <p className="recording-indicator">Recording...</p>}
-              {recordingAvailable && <p className="recording-success">Recording ready for transcription</p>}
+              {isRecording && <span className="recording-status recording-status--live">Recording...</span>}
+              {!isRecording && recordingAvailable && (
+                <span className="recording-status recording-status--ready">Captured and ready</span>
+              )}
             </div>
 
-            <div className="form-controls">
-              <div className="select-group">
-                <label>Language:</label>
-                <select value={language} onChange={(e) => setLanguage(e.target.value)} className="select-input">
-                  <option value="akan">Akan</option>
-                  <option value="ewe">Ewe</option>
+            <div className="field-grid">
+              <label className="field">
+                <span className="field-label">Language</span>
+                <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                  <option className="options" value="akan">Akan</option>
+                  <option className="options"value="ewe">Ewe</option>
                 </select>
-              </div>
+              </label>
 
-              <div className="select-group">
-                <label>Model:</label>
-                <select
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  className="select-input"
-                  disabled={language === "ewe"}
-                >
-                  <option value="wav2vec">Longer Phrases</option>
-                  {language === "akan" && <option value="whisper">Shorter Phrases</option>}
+              <label className="field">
+                <span className="field-label">Model</span>
+                <select value={model} onChange={(e) => setModel(e.target.value)} disabled={language === "ewe"}>
+                  <option className="options" value="wav2vec">Longer phrases</option>
+                  {language === "akan" && <option className="options" value="whisper">Shorter phrases</option>}
                 </select>
-              </div>
+              </label>
 
-              <div className="select-group">
-                <label>Speech Impaired:</label>
+              <label className="field">
+                <span className="field-label">Speech impaired</span>
                 <select
                   value={isImpaired}
                   onChange={(e) => setIsImpaired(e.target.value)}
-                  className="select-input"
                   disabled={model === "wav2vec" || language === "ewe"}
                 >
-                  <option value="false">No</option>
-                  <option value="true">Yes(Speech Impaired Model)</option>
+                  <option className="options" value="false">No</option>
+                  <option className="options" value="true">Yes</option>
                 </select>
-              </div>
+              </label>
 
               {isImpaired === "true" && model === "whisper" && language === "akan" && (
-                <div className="select-group">
-                  <label>Etiology:</label>
-                  <select value={etiology} onChange={(e) => setEtiology(e.target.value)} className="select-input">
-                    <option value="">Select Etiology</option>
+                <label className="field">
+                  <span className="field-label">Etiology</span>
+                  <select value={etiology} onChange={(e) => setEtiology(e.target.value)}>
+                    <option value="">Select etiology</option>
                     <option value="gen-lg">Stammering</option>
-                    <option value="gen-lg">Cerebral Palsy</option>
+                    <option value="gen-lg">Cerebral palsy</option>
                     <option value="gen-lg">Cleft</option>
                   </select>
+                </label>
+              )}
+            </div>
+
+            <button type="submit" className="button button--primary button--wide" disabled={loading || !canSubmit}>
+              {loading ? "Processing..." : "Transcribe audio"}
+            </button>
+
+            <p className="helper-text">
+              We normalize every file to 16 kHz mono for more accurate Akan and Ewe recognition.
+            </p>
+
+            {error && <div className="notice notice--error">{error}</div>}
+          </form>
+        </section>
+
+        <section className="panel panel--output">
+          <div className="panel-heading">
+            <h2>Playback and transcript</h2>
+            <p>Preview the waveform, manage playback, then review the generated text.</p>
+          </div>
+
+          <div className={`waveform-wrap ${audioUrl && transcription ? "is-active" : ""}`}>
+            <div ref={waveformRef} className="waveform-canvas" />
+            {!(audioUrl && transcription) && (
+              <div className="empty-state">
+                <p>
+                  <strong>Waveform preview</strong> appears here once audio has been processed.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="player-bar">
+            <button
+              type="button"
+              className="button button--ghost"
+              onClick={() => {
+                if (!wavesurfer.current) return;
+                if (isPlaying) {
+                  wavesurfer.current.pause();
+                  setIsPlaying(false);
+                } else {
+                  wavesurfer.current.play();
+                  setIsPlaying(true);
+                }
+              }}
+              disabled={!playerReady}
+            >
+              {isPlaying ? "Pause" : "Play"}
+            </button>
+
+            <div className="volume-block">
+              {isMobile() ? (
+                <span className="hint-text">Use device buttons for volume</span>
+              ) : (
+                <div className="slider-wrap">
+                  <input
+                    className="range-input"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={volume}
+                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  />
+                  <span className="slider-value">{Math.round(volume * 100)}%</span>
                 </div>
               )}
             </div>
 
-            <button type="submit" className="submit-button" disabled={loading || !canSubmit}>
-              {loading ? (
-                <>
-                  <span className="spinner"></span>Processing...
-                </>
-              ) : (
-                "Transcribe Audio"
-              )}
-            </button>
-            {error && <div className="error-message">{error}</div>}
-          </form>
-        </div>
-
-        {audioUrl && transcription && (
-          <div className="audio-player card">
-            <h2>Audio Player</h2>
-            <div ref={waveformRef} className="waveform-container" />
-            <div className="player-controls">
-              <button
-                onClick={() => {
-                  if (wavesurfer.current) {
-                    if (isPlaying) {
-                      wavesurfer.current.pause();
-                      setIsPlaying(false);
-                    } else {
-                      wavesurfer.current.play();
-                      setIsPlaying(true);
-                    }
-                  }
-                }}
-                className="play-button"
-              >
-                {isPlaying ? "Pause" : "Play"}
-              </button>
-
-              {isMobile() ? (
-                <p style={{ fontSize: "0.9rem", color: "#777" }}>
-                  Use your device volume buttons to control audio.
-                </p>
-              ) : (
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={volume}
-                  onChange={(e) => {
-                    const vol = parseFloat(e.target.value);
-                    setVolume(vol);
-                  }}
-                />
-              )}
-
-              <div className="time-display">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </div>
+            <div className="time-meter">
+              <span>{formatTime(currentTime)}</span>
+              <span className="divider">/</span>
+              <span>{formatTime(duration)}</span>
             </div>
-            <audio ref={audioRef} src={audioUrl} preload="metadata" />
           </div>
-        )}
 
-        {(transcription || loading) && (
-          <div className="transcription-section card">
-            <div className="section-header">
-              <h2>Transcription Result</h2>
+          {audioUrl && <audio ref={audioRef} src={audioUrl} preload="metadata" hidden />}
+
+          <div className="transcription-card">
+            <div className="transcription-header">
+              <h3>Transcription</h3>
+              {loading && <span className="pill pill--processing">Processing</span>}
             </div>
-            <div className="transcription-output">
-              {loading ? <p>Processing...</p> : <p>{transcription}</p>}
+            <div className="transcription-body">
+              {loading ? (
+                <p>Generating text...</p>
+              ) : transcription ? (
+                <p>{transcription}</p>
+              ) : (
+                <p className="placeholder-copy">Your transcript will appear here after processing.</p>
+              )}
             </div>
-            {!loading && (
-              <a target="_blank" href="https://forms.gle/X6JeXwnCZCtsaW9k7" rel="noreferrer">
-                📋 Please click here to evaluate our app
+            {!loading && transcription && (
+              <a className="accent-link" target="_blank" href="https://forms.gle/X6JeXwnCZCtsaW9k7" rel="noreferrer">
+                Evaluate the experience
               </a>
             )}
           </div>
-        )}
+        </section>
       </main>
 
-      <footer className="app-footer">
-        <p>© {new Date().getFullYear()} Akan ASR Transcriber</p>
+      <footer className="shell-footer">
+        <p>Copyright {new Date().getFullYear()} Akan ASR Transcriber</p>
+        <p>University of Ghana HCI Lab</p>
       </footer>
     </div>
   );
