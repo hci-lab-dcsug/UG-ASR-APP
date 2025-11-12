@@ -267,7 +267,7 @@ export default function Page() {
       const res = await fetch(`${endpoint}${qs}`, {
         method: "POST",
         headers: { Accept: "application/json" },
-        body: formData,
+        body: formData ,
       });
 
       if (!res.ok) {
