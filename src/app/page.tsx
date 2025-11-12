@@ -329,7 +329,7 @@ export default function Page() {
     setPlayerReady(false);
     if (wavesurfer.current) {
       try {
-        wavesurfer.current.destroy();
+        wavesurfer.current.destroy()
       } catch {
         /* noop */
       }
