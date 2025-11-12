@@ -396,7 +396,7 @@ export default function Page() {
           <span className="brand-mark">UG</span>
           <div className="brand-copy">
             <h1>UGVoice Transcribe</h1>
-            <p>Monochrome studio for fast Akan and Ewe speech-to-text.</p>
+            {/* <p>Upload or Record your audio and get accurate transcriptions.</p> */}
           </div>
         </div>
         <div className="chip-row">
@@ -418,7 +418,7 @@ export default function Page() {
         <section className="panel panel--form">
           <div className="panel-heading">
             <h2>Audio Intake</h2>
-            <p>Upload pristine audio or capture a new take, then tailor the model to your speaker.</p>
+            {/* <p>Upload pristine audio or capture a new take, then tailor the model to your speaker.</p> */}
           </div>
 
           <ol className="stepper">
@@ -510,7 +510,7 @@ export default function Page() {
             </button>
 
             <p className="helper-text">
-              We normalize every file to 16 kHz mono for more accurate Akan and Ewe recognition.
+              We normalize every file to 16 kHz mono for more accurate transcriptions.
             </p>
 
             {error && <div className="notice notice--error">{error}</div>}
@@ -520,7 +520,7 @@ export default function Page() {
         <section className="panel panel--output">
           <div className="panel-heading">
             <h2>Playback and transcript</h2>
-            <p>Preview the waveform, manage playback, then review the generated text.</p>
+            {/* <p>Preview the waveform, manage playback, then review the generated text.</p> */}
           </div>
 
           <div className={`waveform-wrap ${audioUrl && transcription ? "is-active" : ""}`}>
