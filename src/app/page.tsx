@@ -242,27 +242,27 @@ export default function Page() {
       const preparedFile = await convertAudioToMono16k(audioFile);
       const formData = new FormData();
       formData.append("file", preparedFile);
-      formData.append("model", model);
-      formData.append("language", language);
-      formData.append("isImpaired", isImpaired);
-      formData.append("etiology", etiology);
+      // formData.append("model", model);
+      // formData.append("language", language);
+      // formData.append("isImpaired", isImpaired);
+      // formData.append("etiology", etiology);
 
-      // Pick endpoint
-      const endpoint = "http://localhost:8000/transcribe";
-      const qs = "";
+      // // Pick endpoint
+      // const endpoint = "http://localhost:8000/transcribe";
+      // const qs = "";
 
-      console.log(model, language, isImpaired);
+      // console.log(model, language, isImpaired);
 
-      // let endpoint = "/api/transcribe";
-      // let qs = "?model_name=sm";
-      //
-      // if (model === "wav2vec") {
-      //   endpoint = "/api/transcribe-wav2vec";
-      //   qs = "?model_used=wav2vec2-bert-akan-ugspeechdata-v2";
-      // } else if (model === "whisper" && !isImpaired) {
-      //   endpoint = "/api/transcribe-non-standard";
-      //   qs = "?model_name=lg";
-      // }
+      let endpoint = "/api/transcribe";
+      let qs = "?model_name=sm";
+      
+      if (model === "wav2vec") {
+        endpoint = "/api/transcribe-wav2vec";
+        qs = "?model_used=wav2vec2-bert-akan-ugspeechdata-v2";
+      } else if (model === "whisper" && !isImpaired) {
+        endpoint = "/api/transcribe-non-standard";
+        qs = "?model_name=lg";
+      }
 
       const res = await fetch(`${endpoint}${qs}`, {
         method: "POST",
@@ -275,9 +275,9 @@ export default function Page() {
         throw new Error(`Server error ${res.status}: ${text.slice(0, 200)}`);
       }
 
-      const data: { transcription?: string } = await res.json();
-      if (!data?.transcription) throw new Error("No transcription field in response. Check backend output.");
-      setTranscription(data.transcription);
+      const data: { text?: string } = await res.json();
+      if (!data?.text) throw new Error("No transcription field in response. Check backend output.");
+      setTranscription(data.text);
     } catch (err: unknown) {
       console.error("handleSubmit error:", err);
       const message =
