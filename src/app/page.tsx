@@ -345,8 +345,8 @@ export default function Page() {
         barRadius: 2,
         height: 90,
         normalize: true,
-        responsive: true,
-        backgroundColor: "transparent",
+        // responsive: true,
+        // backgroundColor: "transparent",
       }) as WaveSurferWithVolume;
 
       wavesurfer.current = ws;
