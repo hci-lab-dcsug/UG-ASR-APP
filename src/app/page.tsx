@@ -324,7 +324,7 @@ export default function Page() {
     if (isImpaired === "false") setEtiology("");
   }, [isImpaired]);
 
-  // Create/destroy wavesurfer when audio & transcript ready
+  // Create/destroy wavesurfer when audio & transcript ready 
   useEffect(() => {
     setPlayerReady(false);
     if (wavesurfer.current) {
