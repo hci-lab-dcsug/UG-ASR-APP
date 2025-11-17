@@ -254,17 +254,23 @@ export default function Page() {
       // console.log(model, language, isImpaired);
 
       let endpoint = "/api/transcribe";
-      let qs = "?model_name=sm";
-      
-      if (model === "wav2vec") {
+      const params = new URLSearchParams({ language });
+      params.set("model_name", "sm");
+
+      if (language === "ewe") {
         endpoint = "/api/transcribe-wav2vec";
-        qs = "?model_used=wav2vec2-bert-akan-ugspeechdata-v2";
+        params.delete("model_name");
+      } else if (model === "wav2vec") {
+        endpoint = "/api/transcribe-wav2vec";
+        params.delete("model_name");
+        params.set("model_used", "wav2vec2-bert-akan-ugspeechdata-v2");
       } else if (model === "whisper" && !isImpaired) {
         endpoint = "/api/transcribe-non-standard";
-        qs = "?model_name=lg";
+        params.set("model_name", "lg");
       }
 
-      const res = await fetch(`${endpoint}${qs}`, {
+      const query = params.toString();
+      const res = await fetch(`${endpoint}${query ? `?${query}` : ""}`, {
         method: "POST",
         headers: { Accept: "application/json" },
         body: formData ,

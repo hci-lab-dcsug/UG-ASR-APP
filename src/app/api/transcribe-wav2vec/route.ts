@@ -3,8 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(req.url);
-    const model =
-      searchParams.get("model_used") ?? "wav2vec2-bert-akan-ugspeechdata-v2";
+    const requestedLanguage = searchParams.get("language") ?? "akan";
+    const language = requestedLanguage.toLowerCase() === "ewe" ? "ewe" : "akan";
+    const defaultModel =
+      language === "akan" ? "wav2vec2-bert-akan-ugspeechdata-v2" : undefined;
+    const model = searchParams.get("model_used") ?? defaultModel;
 
     const form = await req.formData();
     const maybeFile = form.get("file");
@@ -18,13 +21,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const forward = new FormData();
     forward.append("file", maybeFile, filename);
+    const upstreamBase =
+      language === "ewe"
+        ? "https://hcidcsug--ugtts-wav2vec-ewe-api.modal.run"
+        : "https://hcidcsug--ugtts-wav2vec-akan-api.modal.run";
+    const upstreamQuery = new URLSearchParams();
+    if (model) {
+      upstreamQuery.set("model_used", model);
+    }
+    const upstreamUrl = `${upstreamBase}/transcribe${
+      upstreamQuery.toString() ? `?${upstreamQuery.toString()}` : ""
+    }`;
 
-    const upstream = await fetch(
-      `https://hcidcsug--ugtts-wav2vec-akan-api.modal.run/transcribe?model_used=${encodeURIComponent(
-        model
-      )}`,
-      { method: "POST", body: forward, headers: { Accept: "application/json" } }
-    );
+    const upstream = await fetch(upstreamUrl, {
+      method: "POST",
+      body: forward,
+      headers: { Accept: "application/json" },
+    });
     console.log(model);
 
     const text = await upstream.text();
