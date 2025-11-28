@@ -502,10 +502,10 @@ export default function Page() {
                 <label className="field">
                   <span className="field-label">Etiology</span>
                   <select value={etiology} onChange={(e) => setEtiology(e.target.value)}>
-                    <option value="">Select etiology</option>
-                    <option value="gen-lg">Stammering</option>
-                    <option value="gen-lg">Cerebral palsy</option>
-                    <option value="gen-lg">Cleft</option>
+                    <option className="options" value="">Select etiology</option>
+                    <option className="options" value="gen-lg">Cleft</option>
+                    <option className="options" value="gen-lg">Cerebral palsy</option>
+                    <option className="options" value="gen-lg">Stammering</option>
                   </select>
                 </label>
               )}
