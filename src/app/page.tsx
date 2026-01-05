@@ -80,78 +80,78 @@ export default function Page() {
   };
 
   // Downmix and resample audio so the models get a consistent signal
-  const convertAudioToMono16k = async (file: File): Promise<File> => {
-    const TARGET_SAMPLE_RATE = 16000;
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const w = window as PrefixedWindow;
-      const AudioCtor = window.AudioContext || w.webkitAudioContext;
-      const OfflineCtor = window.OfflineAudioContext || w.webkitOfflineAudioContext;
-      if (!AudioCtor || !OfflineCtor) {
-        console.warn("Audio conversion not supported in this browser.");
-        return file;
-      }
+  // const convertAudioToMono16k = async (file: File): Promise<File> => {
+  //   const TARGET_SAMPLE_RATE = 16000;
+  //   try {
+  //     const arrayBuffer = await file.arrayBuffer();
+  //     const w = window as PrefixedWindow;
+  //     const AudioCtor = window.AudioContext || w.webkitAudioContext;
+  //     const OfflineCtor = window.OfflineAudioContext || w.webkitOfflineAudioContext;
+  //     if (!AudioCtor || !OfflineCtor) {
+  //       console.warn("Audio conversion not supported in this browser.");
+  //       return file;
+  //     }
 
-      const audioContext = new AudioCtor();
-      const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
-      if (typeof audioContext.close === "function") {
-        await audioContext.close().catch(() => undefined);
-      }
+  //     const audioContext = new AudioCtor();
+  //     const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+  //     if (typeof audioContext.close === "function") {
+  //       await audioContext.close().catch(() => undefined);
+  //     }
 
-      const frameCount = Math.ceil(decodedBuffer.duration * TARGET_SAMPLE_RATE);
-      const offlineContext = new OfflineCtor(1, frameCount, TARGET_SAMPLE_RATE);
-      const source = offlineContext.createBufferSource();
-      source.buffer = decodedBuffer;
-      source.connect(offlineContext.destination);
-      source.start(0);
+  //     const frameCount = Math.ceil(decodedBuffer.duration * TARGET_SAMPLE_RATE);
+  //     const offlineContext = new OfflineCtor(1, frameCount, TARGET_SAMPLE_RATE);
+  //     const source = offlineContext.createBufferSource();
+  //     source.buffer = decodedBuffer;
+  //     source.connect(offlineContext.destination);
+  //     source.start(0);
 
-      const renderedBuffer = await offlineContext.startRendering();
-      const wavArrayBuffer = audioBufferToWav(renderedBuffer);
-      const baseName = file.name?.replace(/\.[^\/.]+$/, "") || "audio";
-      return new File([wavArrayBuffer], `${baseName}_mono16k.wav`, { type: "audio/wav" });
-    } catch (err) {
-      console.error("Audio conversion failed:", err);
-      return file;
-    }
-  };
+  //     const renderedBuffer = await offlineContext.startRendering();
+  //     const wavArrayBuffer = audioBufferToWav(renderedBuffer);
+  //     const baseName = file.name?.replace(/\.[^\/.]+$/, "") || "audio";
+  //     return new File([wavArrayBuffer], `${baseName}_mono16k.wav`, { type: "audio/wav" });
+  //   } catch (err) {
+  //     console.error("Audio conversion failed:", err);
+  //     return file;
+  //   }
+  // };
 
-  const audioBufferToWav = (buffer: AudioBuffer): ArrayBuffer => {
-    const channelData = buffer.getChannelData(0);
-    const { length } = channelData;
-    const sampleRate = buffer.sampleRate;
-    const bytesPerSample = 2;
-    const dataSize = length * bytesPerSample;
-    const bufferLength = 44 + dataSize;
-    const arrayBuffer = new ArrayBuffer(bufferLength);
-    const view = new DataView(arrayBuffer);
+  // const audioBufferToWav = (buffer: AudioBuffer): ArrayBuffer => {
+  //   const channelData = buffer.getChannelData(0);
+  //   const { length } = channelData;
+  //   const sampleRate = buffer.sampleRate;
+  //   const bytesPerSample = 2;
+  //   const dataSize = length * bytesPerSample;
+  //   const bufferLength = 44 + dataSize;
+  //   const arrayBuffer = new ArrayBuffer(bufferLength);
+  //   const view = new DataView(arrayBuffer);
 
-    const writeString = (dv: DataView, offset: number, str: string) => {
-      for (let i = 0; i < str.length; i++) dv.setUint8(offset + i, str.charCodeAt(i));
-    };
+  //   const writeString = (dv: DataView, offset: number, str: string) => {
+  //     for (let i = 0; i < str.length; i++) dv.setUint8(offset + i, str.charCodeAt(i));
+  //   };
 
-    writeString(view, 0, "RIFF");
-    view.setUint32(4, 36 + dataSize, true);
-    writeString(view, 8, "WAVE");
-    writeString(view, 12, "fmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, 1, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * bytesPerSample, true);
-    view.setUint16(32, bytesPerSample, true);
-    view.setUint16(34, 16, true);
-    writeString(view, 36, "data");
-    view.setUint32(40, dataSize, true);
+  //   writeString(view, 0, "RIFF");
+  //   view.setUint32(4, 36 + dataSize, true);
+  //   writeString(view, 8, "WAVE");
+  //   writeString(view, 12, "fmt ");
+  //   view.setUint32(16, 16, true);
+  //   view.setUint16(20, 1, true);
+  //   view.setUint16(22, 1, true);
+  //   view.setUint32(24, sampleRate, true);
+  //   view.setUint32(28, sampleRate * bytesPerSample, true);
+  //   view.setUint16(32, bytesPerSample, true);
+  //   view.setUint16(34, 16, true);
+  //   writeString(view, 36, "data");
+  //   view.setUint32(40, dataSize, true);
 
-    let offset = 44;
-    for (let i = 0; i < length; i++, offset += 2) {
-      const sample = Math.max(-1, Math.min(1, channelData[i]));
-      const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
-      view.setInt16(offset, intSample, true);
-    }
+  //   let offset = 44;
+  //   for (let i = 0; i < length; i++, offset += 2) {
+  //     const sample = Math.max(-1, Math.min(1, channelData[i]));
+  //     const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+  //     view.setInt16(offset, intSample, true);
+  //   }
 
-    return arrayBuffer;
-  };
+  //   return arrayBuffer;
+  // };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -361,7 +361,6 @@ export default function Page() {
       ws.on("ready", () => {
         setDuration(ws.getDuration());
         setCurrentTime(0);
-        ws.setVolume?.(volume); // set initial volume safely
         setPlayerReady(true);
       });
       ws.on("audioprocess", () => {
