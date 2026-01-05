@@ -239,9 +239,12 @@ export default function Page() {
       setCanSubmit(false);
 
       // Convert audio to mono 16 kHz for upstream API
-      const preparedFile = await convertAudioToMono16k(audioFile);
+      // const preparedFile = await convertAudioToMono16k(audioFile);
       const formData = new FormData();
-      formData.append("file", preparedFile);
+      formData.append("file", audioFile);
+      formData.append("language", language);
+      formData.append("isImpaired", isImpaired === "true" ? "true" : "false");
+      if (etiology) formData.append("etiology", etiology);
       // formData.append("model", model);
       // formData.append("language", language);
       // formData.append("isImpaired", isImpaired);
@@ -254,16 +257,13 @@ export default function Page() {
       // console.log(model, language, isImpaired);
 
       let endpoint = "/api/transcribe";
-      const params = new URLSearchParams({ language });
-      params.set("model_name", "sm");
+      const params = new URLSearchParams();
+      params.set("language", language);
 
       if (language === "ewe") {
         endpoint = "/api/transcribe-wav2vec";
-        params.delete("model_name");
       } else if (model === "wav2vec") {
         endpoint = "/api/transcribe-wav2vec";
-        params.delete("model_name");
-        params.set("model_used", "wav2vec2-bert-akan-ugspeechdata-v2");
       } else if (model === "whisper" && !isImpaired) {
         endpoint = "/api/transcribe-non-standard";
         params.set("model_name", "lg");
@@ -281,9 +281,10 @@ export default function Page() {
         throw new Error(`Server error ${res.status}: ${text.slice(0, 200)}`);
       }
 
-      const data: { text?: string } = await res.json();
-      if (!data?.text) throw new Error("No transcription field in response. Check backend output.");
-      setTranscription(data.text);
+      const data: { text?: string; transcription?: string } = await res.json();
+      const text = data.text ?? data.transcription;
+      if (!text) throw new Error("No transcription field in response. Check backend output.");
+      setTranscription(text);
     } catch (err: unknown) {
       console.error("handleSubmit error:", err);
       const message =

@@ -5,9 +5,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const { searchParams } = new URL(req.url);
     const requestedLanguage = searchParams.get("language") ?? "akan";
     const language = requestedLanguage.toLowerCase() === "ewe" ? "ewe" : "akan";
-    const defaultModel =
-      language === "akan" ? "wav2vec2-bert-akan-ugspeechdata-v2" : undefined;
-    const model = searchParams.get("model_used") ?? defaultModel;
 
     const form = await req.formData();
     const maybeFile = form.get("file");
@@ -16,29 +13,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: "Missing file" }, { status: 400 });
     }
 
-    // File has .name; Blob does not—narrow safely.
+    // File has .name; Blob does not - narrow safely.
     const filename = maybeFile instanceof File ? maybeFile.name : "audio";
 
     const forward = new FormData();
     forward.append("file", maybeFile, filename);
-    const upstreamBase =
-      language === "ewe"
-        ? "https://hcidcsug--ugtts-wav2vec-ewe-api.modal.run"
-        : "https://hcidcsug--ugtts-wav2vec-akan-api.modal.run";
-    const upstreamQuery = new URLSearchParams();
-    if (model) {
-      upstreamQuery.set("model_used", model);
-    }
-    const upstreamUrl = `${upstreamBase}/transcribe${
-      upstreamQuery.toString() ? `?${upstreamQuery.toString()}` : ""
-    }`;
+    forward.append("language", language);
+
+    const upstreamUrl = "https://wav2vec-service-194975005212.europe-west4.run.app/transcribe";
 
     const upstream = await fetch(upstreamUrl, {
       method: "POST",
       body: forward,
       headers: { Accept: "application/json" },
     });
-    console.log(model);
 
     const text = await upstream.text();
     try {
@@ -47,8 +35,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return new NextResponse(text, {
         status: upstream.status,
         headers: {
-          "content-type":
-            upstream.headers.get("content-type") ?? "text/plain; charset=utf-8",
+          "content-type": upstream.headers.get("content-type") ?? "text/plain; charset=utf-8",
         },
       });
     }
