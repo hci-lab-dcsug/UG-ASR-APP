@@ -16,9 +16,10 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://ugvoicetranscribe-three.vercel.app"),
   title: "UGVoice Transcribe",
   description: "Transcribe audio files using our models.",
-  alternates: {
-    canonical: "/",
+  verification: {
+    google: "_lCe2iAUIzZ_GakDP9V6q5fnQnueruXExk0zvc9BUg8",
   },
+  alternates: { canonical: "/" },
   openGraph: {
     title: "UGVoice Transcribe",
     description: "Transcribe audio files using our models.",
@@ -36,6 +37,7 @@ export const metadata: Metadata = {
     follow: true,
   },
 };
+
 
 export default function RootLayout({
   children,
