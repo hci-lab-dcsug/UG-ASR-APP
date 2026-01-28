@@ -13,8 +13,28 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://ugvoicetranscribe-three.vercel.app"),
   title: "UGVoice Transcribe",
   description: "Transcribe audio files using our models.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "UGVoice Transcribe",
+    description: "Transcribe audio files using our models.",
+    url: "/",
+    siteName: "UGVoice Transcribe",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "UGVoice Transcribe",
+    description: "Transcribe audio files using our models.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
