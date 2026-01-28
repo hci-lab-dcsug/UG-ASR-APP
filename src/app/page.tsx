@@ -402,9 +402,14 @@ export default function Page() {
           <span className="brand-mark">UG</span>
           <div className="brand-copy">
             <h1>UGVoice Transcribe</h1>
-            {/* <p>Upload or Record your audio and get accurate transcriptions.</p> */}
           </div>
         </div>
+        <p className="text-sm">
+              UGVoice Transcribe is a web-based speech-to-text application for Ghanaian
+              languages, including Akan and Ewe. It supports both standard speech and
+              speech-impaired users and is part of ongoing research at the University of
+              Ghana. Created by the DCS HCI Lab.
+            </p>
         <div className="chip-row">
           <span className="status-chip">{language === "akan" ? "Akan" : "Ewe"} language</span>
           {/* <span className="status-chip">{model === "whisper" ? "Whisper" : "Wav2Vec"} model</span> */}
