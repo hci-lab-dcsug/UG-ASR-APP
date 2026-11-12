@@ -11,6 +11,15 @@ type WaveSurferWithVolume = WaveSurfer & {
   setVolume?: (v: number) => void;
 };
 
+const LANGUAGES = [
+  { value: "akan", label: "Akan" },
+  { value: "dagaare", label: "Dagaare" },
+  { value: "dagbani", label: "Dagbani" },
+  { value: "ewe", label: "Ewe" },
+  { value: "ga", label: "Ga" },
+  { value: "ikposo", label: "Ikposo" },
+] as const;
+
 export default function Page() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [model, setModel] = useState("whisper"); // "whisper" | "wav2vec"
@@ -260,8 +269,8 @@ export default function Page() {
       const params = new URLSearchParams();
       params.set("language", language);
 
-      if (language === "ewe") {
-        endpoint = "/api/transcribe-wav2vec";
+      if (language !== "akan") {
+        endpoint = "/api/transcribe-ghana";
       } else if (model === "wav2vec") {
         endpoint = "/api/transcribe-wav2vec";
       } else if (model === "whisper" && !isImpaired) {
@@ -317,8 +326,7 @@ export default function Page() {
   }, [audioUrl]);
 
   useEffect(() => {
-    if (language === "ewe") {
-      setModel("wav2vec");
+    if (language !== "akan") {
       setIsImpaired("false");
     }
   }, [language]);
@@ -406,12 +414,14 @@ export default function Page() {
         </div>
         <p className="text-sm">
               UGVoice Transcribe is a web-based speech-to-text application for Ghanaian
-              languages, including Akan and Ewe. It supports both standard speech and
+              languages, including Akan, Dagaare, Dagbani, Ewe, Ga, and Ikposo. It supports standard speech and
               speech-impaired users and is part of ongoing research at the University of
               Ghana. Created by the DCS HCI Lab.
             </p>
         <div className="chip-row">
-          <span className="status-chip">{language === "akan" ? "Akan" : "Ewe"} language</span>
+          <span className="status-chip">
+            {LANGUAGES.find((item) => item.value === language)?.label ?? language} language
+          </span>
           {/* <span className="status-chip">{model === "whisper" ? "Whisper" : "Wav2Vec"} model</span> */}
           {/* <span className={`status-chip ${isRecording ? "status-chip--pulse" : ""}`}>
             {isRecording
@@ -479,16 +489,25 @@ export default function Page() {
               <label className="field">
                 <span className="field-label">Language</span>
                 <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                  <option className="options" value="akan">Akan</option>
-                  <option className="options"value="ewe">Ewe</option>
+                  {LANGUAGES.map((item) => (
+                    <option className="options" value={item.value} key={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
                 </select>
               </label>
 
               <label className="field">
                 <span className="field-label">Model</span>
-                <select value={model} onChange={(e) => setModel(e.target.value)} disabled={language === "ewe"}>
-                  <option className="options" value="wav2vec">Longer phrases</option>
-                  {language === "akan" && <option className="options" value="whisper">Shorter phrases</option>}
+                <select value={model} onChange={(e) => setModel(e.target.value)} disabled={language !== "akan"}>
+                  {language === "akan" ? (
+                    <>
+                      <option className="options" value="wav2vec">Longer phrases</option>
+                      <option className="options" value="whisper">Shorter phrases</option>
+                    </>
+                  ) : (
+                    <option className="options" value={model}>Multilingual ASR</option>
+                  )}
                 </select>
               </label>
 
@@ -497,7 +516,7 @@ export default function Page() {
                 <select
                   value={isImpaired}
                   onChange={(e) => setIsImpaired(e.target.value)}
-                  disabled={model === "wav2vec" || language === "ewe"}
+                  disabled={model === "wav2vec" || language !== "akan"}
                 >
                   <option className="options" value="false">No</option>
                   <option className="options" value="true">Yes</option>
@@ -617,7 +636,7 @@ export default function Page() {
       </main>
 
       <footer className="shell-footer">
-        <p>Copyright {new Date().getFullYear()} Akan ASR Transcriber</p>
+        <p>Copyright {new Date().getFullYear()} Ghanaian Languages ASR Transcriber</p>
         <p>University of Ghana HCI Lab</p>
       </footer>
     </div>
