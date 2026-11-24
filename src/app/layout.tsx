@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import MaintenanceScreen from "./maintenance-screen";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,12 +45,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isMaintenanceMode =
+    process.env.MAINTENANCE_MODE?.trim().toLowerCase() === "true";
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        {isMaintenanceMode ? <MaintenanceScreen /> : children}
       </body>
     </html>
   );

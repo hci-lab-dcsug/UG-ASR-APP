@@ -48,6 +48,153 @@ button {
   font-family: inherit;
 }
 
+.maintenance-page {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 2rem;
+  isolation: isolate;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.1), transparent 38%),
+    var(--bg);
+  background-size: 48px 48px, 48px 48px, auto, auto;
+}
+
+.maintenance-orb {
+  position: absolute;
+  z-index: -1;
+  border-radius: 999px;
+  filter: blur(10px);
+  opacity: 0.45;
+}
+
+.maintenance-orb--one {
+  width: 16rem;
+  height: 16rem;
+  top: -7rem;
+  right: -4rem;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.maintenance-orb--two {
+  width: 12rem;
+  height: 12rem;
+  bottom: -5rem;
+  left: -3rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.maintenance-card {
+  width: min(100%, 42rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  padding: clamp(2rem, 7vw, 4.5rem);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-lg);
+  background: rgba(8, 8, 8, 0.76);
+  box-shadow: var(--shadow-soft);
+  text-align: center;
+  backdrop-filter: blur(20px);
+}
+
+.maintenance-brand {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.maintenance-brand .brand-mark {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.maintenance-icon {
+  display: grid;
+  place-items: center;
+  width: 5.5rem;
+  height: 5.5rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.maintenance-icon svg {
+  width: 2.75rem;
+  height: 2.75rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.maintenance-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.maintenance-eyebrow {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.maintenance-copy h1 {
+  font-size: clamp(2.25rem, 8vw, 4.25rem);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.055em;
+}
+
+.maintenance-copy > p:last-child {
+  max-width: 36rem;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.maintenance-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.maintenance-status-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+  animation: maintenance-pulse 2s ease-out infinite;
+}
+
+.maintenance-footer {
+  width: 100%;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--surface-border);
+  color: var(--text-faint);
+  font-size: 0.85rem;
+}
+
 .app-shell {
   min-height: 100vh;
   display: flex;
@@ -660,5 +807,20 @@ button {
   }
   100% {
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+@keyframes maintenance-pulse {
+  70% {
+    box-shadow: 0 0 0 0.65rem rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maintenance-status-dot {
+    animation: none;
   }
 }
